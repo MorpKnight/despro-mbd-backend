@@ -6,6 +6,9 @@ services:
     tty: true
     stdin_open: true
     restart: always
+    # env_file:
+    #   - .env.prod
+    ports:
       - "3000:3000"
     environment:
       - NODE_ENV=${NODE_ENV}
