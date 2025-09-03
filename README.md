@@ -14,13 +14,15 @@ Backend RESTful API untuk aplikasi MBG Review & Track, mendukung monitoring, abs
 - Logging terpusat (Winston)
 - Support SQLite (dev) & PostgreSQL (production)
 
+
 ## Instalasi
 1. Clone repo ini.
 2. Jalankan `npm install` untuk menginstal semua dependencies.
-3. Konfigurasikan file `.env` sesuai kebutuhan (lihat contoh di repo).
+3. Konfigurasikan file `.env` atau `.env.prod` sesuai kebutuhan. Untuk production, gunakan database PostgreSQL eksternal (misal NeonDB):
+   - Isi DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS sesuai detail dari NeonDB.
 4. Jalankan server:
    - Development: `npm run dev`
-   - Production: `npm start`
+   - Production: `npm start` atau gunakan Docker Compose (tanpa service db).
 
 ## Struktur Direktori
 - `/src/api` — Semua route API
