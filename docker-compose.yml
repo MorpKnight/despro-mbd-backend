@@ -3,6 +3,8 @@ services:
   app:
     build: .
     container_name: mbg-backend
+    tty: true
+    stdin_open: true
     restart: always
     env_file:
       - .env.prod
@@ -23,6 +25,8 @@ services:
   db:
     image: postgres:15-alpine
     container_name: mbg-postgres
+    tty: true
+    stdin_open: true
     restart: always
     environment:
       POSTGRES_DB: mbg_prod
