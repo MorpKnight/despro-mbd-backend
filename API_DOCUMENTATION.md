@@ -1,5 +1,12 @@
-
 # Dokumentasi API - MBG Review & Track
+
+> **Update September 2025:**
+> - Semua id (userId, schoolId, dsb) bertipe UUID (string), bukan integer.
+> - Role `MASTERADMIN` hanya dapat membuat, mengubah, dan menghapus user dengan role `MASTERADMIN`.
+> - Endpoint khusus: POST `/users/masteradmin` untuk membuat user MASTERADMIN.
+> - Error validasi bisa berupa array `errors` (lihat contoh di bawah).
+> - API Key untuk endpoint absensi diambil dari field `apiKey` pada model School.
+> - Contoh struktur objek (user, school, dsb) ditambahkan di bagian akhir.
 
 ## Daftar Isi
 
@@ -14,9 +21,10 @@
     - [Register Pengguna](#register-pengguna)
     - [Login Pengguna](#login-pengguna)
     - [Get Profile](#get-profile)
-  - [Users (Admin)](#users-admin)
+  - [Users (Admin & MASTERADMIN)](#users-admin--masteradmin)
     - [Get All Users](#get-all-users)
     - [Create User](#create-user)
+    - [Create User MASTERADMIN](#create-user-masteradmin)
     - [Get User by ID](#get-user-by-id)
     - [Update User](#update-user)
     - [Delete User](#delete-user)
@@ -96,7 +104,7 @@ Request:
     "password": "string (wajib, min 8 karakter)",
     "role": "string (wajib, salah satu: ADMIN, SISWA, SEKOLAH, KATERING, DINKES)",
     "nfcTagId": "string (opsional)",
-    "schoolId": "integer (opsional, untuk role SISWA)"
+    "schoolId": "string (UUID, opsional, untuk role SISWA)"
   }
   ```
 
@@ -106,7 +114,7 @@ Response:
   {
     "token": "string (JWT)",
     "user": {
-      "id": "integer",
+      "id": "string (UUID)",
       "namaLengkap": "string",
       "email": "string",
       "role": "string"
@@ -146,7 +154,7 @@ Response:
   {
     "token": "string (JWT)",
     "user": {
-      "id": "integer",
+      "id": "string (UUID)",
       "namaLengkap": "string",
       "email": "string",
       "role": "string"
@@ -178,7 +186,7 @@ Response:
   ```json
   {
     "user": {
-      "id": "integer",
+      "id": "string (UUID)",
       "namaLengkap": "string",
       "email": "string",
       "role": "string",
@@ -193,12 +201,12 @@ Response:
 
 ---
 
-### Users (Admin)
+### Users (Admin & MASTERADMIN)
 
 #### Get All Users
 Endpoint: **GET /users**
 Deskripsi: Mendapatkan daftar semua pengguna (dengan paginasi).
-Otorisasi: Token (**Role: ADMIN**)
+Otorisasi: Token (**Role: ADMIN, MASTERADMIN**)
 
 Request:
 - Headers:
@@ -223,8 +231,8 @@ Response:
 
 #### Create User
 Endpoint: **POST /users**
-Deskripsi: Membuat pengguna baru.
-Otorisasi: Token (**Role: ADMIN**)
+Deskripsi: Membuat pengguna baru (role selain MASTERADMIN).
+Otorisasi: Token (**Role: ADMIN, MASTERADMIN**)
 
 Request:
 - Headers:
@@ -237,7 +245,36 @@ Request:
     "password": "string (wajib)",
     "role": "string (wajib)",
     "nfcTagId": "string (opsional)",
-    "schoolId": "integer (opsional)"
+    "schoolId": "string (UUID, opsional)"
+  }
+  ```
+
+Response:
+- 201 Created:
+  ```json
+  { "user": { ...user } }
+  ```
+- 400 / 422 / 401 / 403
+
+---
+
+#### Create User MASTERADMIN
+Endpoint: **POST /users/masteradmin**
+Deskripsi: Membuat user MASTERADMIN (khusus MASTERADMIN).
+Otorisasi: Token (**Role: MASTERADMIN**)
+
+Request:
+- Headers:
+  - Authorization: Bearer <JWT_TOKEN>
+- Body:
+  ```json
+  {
+    "namaLengkap": "string (wajib)",
+    "email": "string (wajib)",
+    "password": "string (wajib)",
+    "role": "string (wajib, harus MASTERADMIN)",
+    "nfcTagId": "string (opsional)",
+    "schoolId": "string (UUID, opsional)"
   }
   ```
 
@@ -253,13 +290,13 @@ Response:
 #### Get User by ID
 Endpoint: **GET /users/:id**
 Deskripsi: Mendapatkan detail satu pengguna.
-Otorisasi: Token (**Role: ADMIN**)
+Otorisasi: Token (**Role: ADMIN, MASTERADMIN**)
 
 Request:
 - Headers:
   - Authorization: Bearer <JWT_TOKEN>
 - Path Parameters:
-  - id (integer)
+  - id (string (UUID))
 
 Response:
 - 200 OK:
@@ -272,14 +309,14 @@ Response:
 
 #### Update User
 Endpoint: **PUT /users/:id**
-Deskripsi: Memperbarui data pengguna.
-Otorisasi: Token (**Role: ADMIN**)
+Deskripsi: Memperbarui data pengguna. User dengan role MASTERADMIN hanya bisa diubah oleh MASTERADMIN.
+Otorisasi: Token (**Role: ADMIN, MASTERADMIN**)
 
 Request:
 - Headers:
   - Authorization: Bearer <JWT_TOKEN>
 - Path Parameters:
-  - id (integer)
+  - id (string (UUID))
 - Body:
   ```json
   {
@@ -288,7 +325,7 @@ Request:
     "password": "string (opsional)",
     "role": "string (opsional)",
     "nfcTagId": "string (opsional)",
-    "schoolId": "integer (opsional)"
+    "schoolId": "string (UUID, opsional)"
   }
   ```
 
@@ -303,14 +340,14 @@ Response:
 
 #### Delete User
 Endpoint: **DELETE /users/:id**
-Deskripsi: Menghapus pengguna.
-Otorisasi: Token (**Role: ADMIN**)
+Deskripsi: Menghapus pengguna. User dengan role MASTERADMIN hanya bisa dihapus oleh MASTERADMIN.
+Otorisasi: Token (**Role: ADMIN, MASTERADMIN**)
 
 Request:
 - Headers:
   - Authorization: Bearer <JWT_TOKEN>
 - Path Parameters:
-  - id (integer)
+  - id (string (UUID))
 
 Response:
 - 200 OK:
@@ -331,7 +368,7 @@ Otorisasi: Header API Key (X-API-KEY, didapat dari sekolah)
 Request:
 - Headers:
   - Content-Type: application/json
-  - X-API-KEY: string (wajib)
+  - X-API-KEY: string (wajib, diambil dari field apiKey pada model School)
 - Body:
   ```json
   {
@@ -367,7 +404,7 @@ Request:
 - Body:
   ```json
   {
-    "schoolId": "integer (wajib)",
+    "schoolId": "string (UUID, wajib)",
     "tanggal": "string (YYYY-MM-DD, wajib)",
     "deskripsiMenu": "string (wajib)",
     "fotoMenuUrl": "string (wajib)",
@@ -440,7 +477,7 @@ Request:
 - Body:
   ```json
   {
-    "cateringLogId": "integer (wajib)",
+    "cateringLogId": "string (UUID, wajib)",
     "rating": "integer (wajib, 1-5)",
     "komentar": "string (opsional)"
   }
@@ -550,7 +587,7 @@ Request:
 - Headers:
   - Authorization: Bearer <JWT_TOKEN>
 - Path Parameters:
-  - id (integer)
+  - id (string (UUID))
 - Body:
   ```json
   {
@@ -631,4 +668,80 @@ Response:
 
 ---
 
-> Untuk detail field pada objek user, cateringLog, feedback, emergencyReport, dan school, silakan lihat skema database atau tanyakan pada tim backend.
+## Contoh Struktur Objek
+
+### User
+```json
+{
+  "id": "string (UUID)",
+  "namaLengkap": "string",
+  "email": "string",
+  "password": "string (hashed)",
+  "role": "MASTERADMIN | ADMIN | SISWA | SEKOLAH | KATERING | DINKES",
+  "nfcTagId": "string (opsional)",
+  "SchoolId": "string (UUID, opsional)"
+}
+```
+
+### School
+```json
+{
+  "id": "string (UUID)",
+  "namaSekolah": "string",
+  "alamat": "string",
+  "apiKey": "string (UUID)"
+}
+```
+
+### CateringLog
+```json
+{
+  "id": "string (UUID)",
+  "tanggal": "string (YYYY-MM-DD)",
+  "deskripsiMenu": "string",
+  "fotoMenuUrl": "string",
+  "catatan": "string (opsional)",
+  "SchoolId": "string (UUID)",
+  "UserId": "string (UUID)"
+}
+```
+
+### Feedback
+```json
+{
+  "id": "string (UUID)",
+  "rating": "integer (1-5)",
+  "komentar": "string (opsional)",
+  "timestamp": "string (ISO 8601)",
+  "CateringLogId": "string (UUID)",
+  "UserId": "string (UUID)"
+}
+```
+
+### EmergencyReport
+```json
+{
+  "id": "string (UUID)",
+  "deskripsi": "string",
+  "status": "BARU | DITINDAKLANJUTI | SELESAI",
+  "timestamp": "string (ISO 8601)",
+  "SchoolId": "string (UUID)",
+  "UserId": "string (UUID)"
+}
+```
+
+---
+
+## Contoh Error Validasi
+
+Jika validasi gagal, respons error bisa berupa:
+```json
+{
+  "errors": [
+    { "msg": "Email tidak valid.", "param": "email", "location": "body" },
+    { "msg": "Password wajib diisi.", "param": "password", "location": "body" }
+  ]
+}
+```
+
+---
