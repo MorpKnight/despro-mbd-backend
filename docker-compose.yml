@@ -20,6 +20,7 @@ services:
       - DB_NAME=mbg_prod
       - DB_USER=mbguser
       - DB_PASS=mbgpass
+      - TZ=Asia/Jakarta
     networks:
       - internal
   db:
@@ -32,6 +33,7 @@ services:
       POSTGRES_DB: mbg_prod
       POSTGRES_USER: mbguser
       POSTGRES_PASSWORD: mbgpass
+      TZ: Asia/Jakarta
     # ports:
     #   - "5432:5432"
     volumes:
