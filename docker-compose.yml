@@ -36,3 +36,8 @@ services:
       - internal
 volumes:
   pgdata:
+
+networks:
+  internal:
+    driver: bridge
+    internal: true
