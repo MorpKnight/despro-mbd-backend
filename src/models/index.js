@@ -8,8 +8,8 @@ const EmergencyReport = require('./emergencyReport.model');
 const { sequelize } = require('../config/database');
 
 // Definisikan asosiasi antar model
-School.hasMany(User, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
-User.belongsTo(School, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
+School.hasMany(User, { foreignKey: { allowNull: true }, onDelete: 'CASCADE' });
+User.belongsTo(School, { foreignKey: { allowNull: true }, onDelete: 'CASCADE' });
 
 User.hasMany(AttendanceLog, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
 AttendanceLog.belongsTo(User, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
@@ -20,9 +20,21 @@ AttendanceLog.belongsTo(School, { foreignKey: { allowNull: false }, onDelete: 'C
 // Tambahkan asosiasi lain sesuai kebutuhan desain
 // Contoh: Feedback, CateringLog, EmergencyReport bisa dihubungkan ke User/School jika diperlukan
 
+
 async function syncModels() {
   await sequelize.sync({ alter: true });
   console.log('All models were synchronized successfully.');
+  // Seeder master admin jika belum ada
+  const masterAdmin = await User.findOne({ where: { role: 'MASTERADMIN' } });
+  if (!masterAdmin) {
+    await User.create({
+      namaLengkap: 'Master Admin',
+      email: 'christoffelsihombing@gmail.com',
+      password: await require('bcryptjs').hash('masteradmin123', 10),
+      role: 'MASTERADMIN'
+    });
+    console.log('Master Admin user created: christoffelsihombing@gmail.com / masteradmin123');
+  }
 }
 
 module.exports = {

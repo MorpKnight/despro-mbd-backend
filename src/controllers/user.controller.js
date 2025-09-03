@@ -24,9 +24,13 @@ exports.getUserById = async (req, res) => {
   }
 };
 
+
 exports.createUser = async (req, res) => {
   try {
     const { namaLengkap, email, password, role, nfcTagId, schoolId } = req.body;
+    if (role === 'MASTERADMIN') {
+      return res.status(403).json({ message: 'Only MASTERADMIN can create MASTERADMIN user.' });
+    }
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) return res.status(400).json({ message: 'Email already registered.' });
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -37,17 +41,34 @@ exports.createUser = async (req, res) => {
   }
 };
 
+exports.createMasterAdmin = async (req, res) => {
+  try {
+    const { namaLengkap, email, password } = req.body;
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) return res.status(400).json({ message: 'Email already registered.' });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({ namaLengkap, email, password: hashedPassword, role: 'MASTERADMIN' });
+    res.status(201).json({ user });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to create MASTERADMIN.', error: err.message });
+  }
+};
+
 exports.updateUser = async (req, res) => {
   try {
     const { namaLengkap, email, password, role, nfcTagId, schoolId } = req.body;
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found.' });
+    // Proteksi update MASTERADMIN
+    if (user.role === 'MASTERADMIN' && req.user.role !== 'MASTERADMIN') {
+      return res.status(403).json({ message: 'Only MASTERADMIN can update MASTERADMIN user.' });
+    }
     if (password) {
       user.password = await bcrypt.hash(password, 10);
     }
     if (namaLengkap) user.namaLengkap = namaLengkap;
     if (email) user.email = email;
-    if (role) user.role = role;
+    if (role && req.user.role === 'MASTERADMIN') user.role = role;
     if (nfcTagId !== undefined) user.nfcTagId = nfcTagId;
     if (schoolId) user.SchoolId = schoolId;
     await user.save();
@@ -61,6 +82,10 @@ exports.deleteUser = async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found.' });
+    // Proteksi delete MASTERADMIN
+    if (user.role === 'MASTERADMIN' && req.user.role !== 'MASTERADMIN') {
+      return res.status(403).json({ message: 'Only MASTERADMIN can delete MASTERADMIN user.' });
+    }
     await user.destroy();
     res.json({ message: 'User deleted.' });
   } catch (err) {

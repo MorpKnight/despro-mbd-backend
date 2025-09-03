@@ -5,6 +5,11 @@ const { sequelize } = require('../config/database');
 class EmergencyReport extends Model {}
 
 EmergencyReport.init({
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   deskripsi: {
     type: DataTypes.TEXT,
     allowNull: false

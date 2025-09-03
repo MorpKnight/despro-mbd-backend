@@ -5,6 +5,11 @@ const { sequelize } = require('../config/database');
 class AttendanceLog extends Model {}
 
 AttendanceLog.init({
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   timestamp: {
     type: DataTypes.DATE,
     allowNull: false

@@ -9,7 +9,13 @@ class User extends Model {
   }
 }
 
+
 User.init({
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   namaLengkap: {
     type: DataTypes.STRING,
     allowNull: false
@@ -25,13 +31,21 @@ User.init({
     allowNull: false
   },
   role: {
-    type: DataTypes.ENUM('ADMIN', 'SISWA', 'SEKOLAH', 'KATERING', 'DINKES'),
+    type: DataTypes.ENUM('MASTERADMIN', 'ADMIN', 'SISWA', 'SEKOLAH', 'KATERING', 'DINKES'),
     allowNull: false
   },
   nfcTagId: {
     type: DataTypes.STRING,
     allowNull: true,
     unique: true
+  },
+  SchoolId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'Schools',
+      key: 'id'
+    }
   }
 }, {
   sequelize,

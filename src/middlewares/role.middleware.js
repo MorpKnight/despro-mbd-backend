@@ -1,8 +1,18 @@
 // src/middlewares/role.middleware.js
+
 exports.checkRole = (roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({ message: 'Forbidden. Insufficient role.' });
+    }
+    next();
+  };
+};
+
+exports.checkMasterAdmin = () => {
+  return (req, res, next) => {
+    if (!req.user || req.user.role !== 'MASTERADMIN') {
+      return res.status(403).json({ message: 'Forbidden. MASTERADMIN only.' });
     }
     next();
   };
