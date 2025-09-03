@@ -1,4 +1,43 @@
+
 # Dokumentasi API - MBG Review & Track
+
+## Daftar Isi
+
+- [Pendahuluan](#pendahuluan)
+- [Informasi Umum](#informasi-umum)
+  - [Base URL](#base-url)
+  - [Autentikasi](#autentikasi)
+  - [Format Respons](#format-respons)
+  - [Kode Status Umum](#kode-status-umum)
+- [Endpoints API](#endpoints-api)
+  - [Authentication](#authentication)
+    - [Register Pengguna](#register-pengguna)
+    - [Login Pengguna](#login-pengguna)
+    - [Get Profile](#get-profile)
+  - [Users (Admin)](#users-admin)
+    - [Get All Users](#get-all-users)
+    - [Create User](#create-user)
+    - [Get User by ID](#get-user-by-id)
+    - [Update User](#update-user)
+    - [Delete User](#delete-user)
+  - [Attendance (Sinkronisasi Raspberry Pi)](#attendance-sinkronisasi-raspberry-pi)
+    - [Sync Attendance](#sync-attendance)
+  - [Catering](#catering)
+    - [Create Catering Log](#create-catering-log)
+    - [Get Catering Logs by Caterer](#get-catering-logs-by-caterer)
+  - [Feedback (Siswa)](#feedback-siswa)
+    - [Get Today's Menu](#get-todays-menu)
+    - [Submit Feedback](#submit-feedback)
+    - [Get My Feedback History](#get-my-feedback-history)
+  - [Emergency Reports](#emergency-reports)
+    - [Create Emergency Report (Sekolah)](#create-emergency-report-sekolah)
+    - [Get Emergency Reports by My School](#get-emergency-reports-by-my-school)
+    - [Get All Emergency Reports (Admin & Dinkes)](#get-all-emergency-reports-admin--dinkes)
+    - [Update Emergency Report Status (Admin & Dinkes)](#update-emergency-report-status-admin--dinkes)
+  - [Dashboard](#dashboard)
+    - [Get School Dashboard Summary](#get-school-dashboard-summary)
+    - [Get Catering Dashboard Summary](#get-catering-dashboard-summary)
+    - [Get Admin Dashboard Summary](#get-admin-dashboard-summary)
 
 ## Pendahuluan
 API MBG Review & Track adalah backend RESTful yang dirancang untuk mendukung aplikasi monitoring, absensi, dan review menu makanan di lingkungan sekolah. API ini menyediakan fitur autentikasi, manajemen pengguna, sinkronisasi data absensi, pengelolaan menu katering, feedback siswa, laporan darurat, dan dashboard ringkasan data. Semua endpoint menggunakan format JSON dan JWT untuk otentikasi.
