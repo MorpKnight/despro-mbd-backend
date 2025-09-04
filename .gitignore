@@ -80,3 +80,5 @@ Icon?
 *.tmp
 
 .env.*
+.env
+*.db

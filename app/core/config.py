@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "postgres")
 
     class Config:
-        env_file = ".env.fastapi"
+        env_file = ".env"
         case_sensitive = False
 
     @property
