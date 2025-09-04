@@ -1,42 +1,75 @@
-# MBG Review & Track Backend
+# MBG Backend (FastAPI)
 
-Backend RESTful API untuk aplikasi MBG Review & Track, mendukung monitoring, absensi, review menu makanan, dan laporan darurat di lingkungan sekolah.
+Versi FastAPI dari proyek MBG Backend. Tujuan: migrasi endpoint dan fitur utama dari Express ke FastAPI dengan parity.
 
-## Fitur Utama
-- Autentikasi JWT
-- Manajemen pengguna (Admin)
-- Sinkronisasi absensi (Raspberry Pi)
-- Pengelolaan menu katering
-- Feedback siswa terhadap menu
-- Laporan darurat oleh sekolah
-- Dashboard ringkasan data
-- Rate limiter & keamanan (Helmet, CORS)
-- Logging terpusat (Winston)
-- Support SQLite (dev) & PostgreSQL (production)
+## Setup & Install
 
+```powershell
+# Aktifkan venv
+.\.venv\Scripts\Activate.ps1
+# Install dependencies
+pip install -r requirements.txt
+# Copy dan edit .env
+cp .env.example .env
+# Jalankan server
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
 
-## Instalasi
-1. Clone repo ini.
-2. Jalankan `npm install` untuk menginstal semua dependencies.
-3. Konfigurasikan file `.env` atau `.env.prod` sesuai kebutuhan. Untuk production, gunakan database PostgreSQL eksternal (misal NeonDB):
-   - Isi DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS sesuai detail dari NeonDB.
-4. Jalankan server:
-   - Development: `npm run dev`
-   - Production: `npm start` atau gunakan Docker Compose (tanpa service db).
-
-## Struktur Direktori
-- `/src/api` — Semua route API
-- `/src/controllers` — Logika bisnis
-- `/src/models` — Model Sequelize
-- `/src/middlewares` — Middleware (auth, error, validation, dll.)
-- `/src/config` — Konfigurasi database, logger
-- `/src/validators` — Validasi request
+## Endpoint Utama
+- `/auth` (register, login, me)
+- `/users` (CRUD, masteradmin)
+- `/attendance/sync`
+- `/catering` (CRUD, me)
+- `/feedback` (menu/today, submit, me)
+- `/emergency-report` (CRUD, me)
+- `/reports` (summary, emergency)
+- `/dashboard` (school, catering, admin)
 
 ## Dokumentasi API
-Lihat file `API_DOCUMENTATION.md` untuk detail endpoint, format request/response, dan otorisasi.
+- Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- Redoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
-## Kontribusi
-Pull request dan issue sangat terbuka untuk pengembangan lebih lanjut.
+## Middleware & Security
+- JWT, role-based, API key
+- Security headers (Helmet parity)
+- CORS whitelist (env: `CORS_WHITELIST`)
+- Rate limiter (SlowAPI, login)
+- Error handler terpusat
 
-## Lisensi
-MIT
+## Parity dengan Express
+- Semua endpoint utama sudah migrasi
+- Catatan: endpoint `/users/masteradmin` dan `/feedback/menu/today` perlu dicek/ditambah jika belum
+
+## Testing
+```powershell
+pytest --maxfail=5 --disable-warnings -v
+```
+
+## Contoh Request
+### Register
+```json
+POST /auth/register
+{
+  "namaLengkap": "User",
+  "email": "user@example.com",
+  "password": "password123",
+  "role": "SISWA"
+}
+```
+### Login
+```json
+POST /auth/login
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+### Response Error
+```json
+{
+  "message": "Invalid credentials"
+}
+```
+
+## Konfigurasi Environment
+Lihat dan edit `.env.example` sesuai kebutuhan (CORS, DB, JWT, dsb).

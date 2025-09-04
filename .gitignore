@@ -1,3 +1,50 @@
-node_modules/
-.env
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+
+# Virtualenv
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
 *.db
+*.sqlite3
+
+# Alembic
+alembic/versions/
+
+# Env
+.env
+.env.*
+
+# Logs
+*.log
+
+# Docker
+*.pid
+*.pid.lock
+docker-compose.override.yml
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Misc
+*.bak
+*.tmp
