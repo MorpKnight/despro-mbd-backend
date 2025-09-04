@@ -8,8 +8,14 @@ services:
       - JWT_SECRET=${JWT_SECRET:-dev-secret-change-me}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       - DATABASE_URL=${DATABASE_URL:-sqlite:///./mbg_fastapi_dev.db}
-    ports:
-      - "8000:8000"
+    # ports:
+    #   - "8000:8000"
     volumes:
-      - ./:/app
+      - /home/ubuntu/projects/mbg-despro-fastapi/:/app
     command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    networks:
+      - cloudflared-private
+
+networks:
+  cloudflared-private:
+    external: true
