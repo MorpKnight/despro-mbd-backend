@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mbg_fastapi
+    # ports:
+    #   - "8000:8000"
+    volumes:
+      - .:/app
+    # environment:
+    #   # Tambahkan env sesuai kebutuhan
+    #   # Contoh: DB_ENGINE, DB_HOST, dll
+    restart: unless-stopped
