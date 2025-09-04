@@ -1,25 +1,25 @@
-# Dokumentasi API - MBG Review & Track
+# API Documentation - MBG Review & Track
 
 > **Update September 2025:**
-> - Semua id (userId, schoolId, dsb) bertipe UUID (string), bukan integer.
-> - Role `MASTERADMIN` hanya dapat membuat, mengubah, dan menghapus user dengan role `MASTERADMIN`.
-> - Endpoint khusus: POST `/users/masteradmin` untuk membuat user MASTERADMIN.
-> - Error validasi bisa berupa array `errors` (lihat contoh di bawah).
-> - API Key untuk endpoint absensi diambil dari field `apiKey` pada model School.
-> - Contoh struktur objek (user, school, dsb) ditambahkan di bagian akhir.
+> - All IDs (userId, schoolId, etc.) are of type UUID (string), not integer.
+> - Role `MASTERADMIN` can only create, modify, and delete users with the `MASTERADMIN` role.
+> - Special endpoint: POST `/users/masteradmin` to create MASTERADMIN user.
+> - Validation errors can be an array of `errors` (see example below).
+> - API Key for attendance endpoint is taken from the `apiKey` field in the School model.
+> - Example object structures (user, school, etc.) added at the end.
 
-## Daftar Isi
+## Table of Contents
 
-- [Pendahuluan](#pendahuluan)
-- [Informasi Umum](#informasi-umum)
+- [Introduction](#introduction)
+- [General Information](#general-information)
   - [Base URL](#base-url)
-  - [Autentikasi](#autentikasi)
-  - [Format Respons](#format-respons)
-  - [Kode Status Umum](#kode-status-umum)
-- [Endpoints API](#endpoints-api)
   - [Authentication](#authentication)
-    - [Register Pengguna](#register-pengguna)
-    - [Login Pengguna](#login-pengguna)
+  - [Response Format](#response-format)
+  - [Common Status Codes](#common-status-codes)
+- [API Endpoints](#api-endpoints)
+  - [Authentication](#authentication)
+    - [Register User](#register-user)
+    - [Login User](#login-user)
     - [Get Profile](#get-profile)
   - [Users (Admin & MASTERADMIN)](#users-admin--masteradmin)
     - [Get All Users](#get-all-users)
@@ -28,59 +28,59 @@
     - [Get User by ID](#get-user-by-id)
     - [Update User](#update-user)
     - [Delete User](#delete-user)
-  - [Attendance (Sinkronisasi Raspberry Pi)](#attendance-sinkronisasi-raspberry-pi)
+  - [Attendance (Raspberry Pi Synchronization)](#attendance-raspberry-pi-synchronization)
     - [Sync Attendance](#sync-attendance)
   - [Catering](#catering)
     - [Create Catering Log](#create-catering-log)
     - [Get Catering Logs by Caterer](#get-catering-logs-by-caterer)
-  - [Feedback (Siswa)](#feedback-siswa)
+  - [Feedback (Student)](#feedback-student)
     - [Get Today's Menu](#get-todays-menu)
     - [Submit Feedback](#submit-feedback)
     - [Get My Feedback History](#get-my-feedback-history)
   - [Emergency Reports](#emergency-reports)
-    - [Create Emergency Report (Sekolah)](#create-emergency-report-sekolah)
+    - [Create Emergency Report (School)](#create-emergency-report-school)
     - [Get Emergency Reports by My School](#get-emergency-reports-by-my-school)
-    - [Get All Emergency Reports (Admin & Dinkes)](#get-all-emergency-reports-admin--dinkes)
-    - [Update Emergency Report Status (Admin & Dinkes)](#update-emergency-report-status-admin--dinkes)
+    - [Get All Emergency Reports (Admin & Health Dept)](#get-all-emergency-reports-admin--health-dept)
+    - [Update Emergency Report Status (Admin & Health Dept)](#update-emergency-report-status-admin--health-dept)
   - [Dashboard](#dashboard)
     - [Get School Dashboard Summary](#get-school-dashboard-summary)
     - [Get Catering Dashboard Summary](#get-catering-dashboard-summary)
     - [Get Admin Dashboard Summary](#get-admin-dashboard-summary)
 
-## Pendahuluan
-API MBG Review & Track adalah backend RESTful yang dirancang untuk mendukung aplikasi monitoring, absensi, dan review menu makanan di lingkungan sekolah. API ini menyediakan fitur autentikasi, manajemen pengguna, sinkronisasi data absensi, pengelolaan menu katering, feedback siswa, laporan darurat, dan dashboard ringkasan data. Semua endpoint menggunakan format JSON dan JWT untuk otentikasi.
+## Introduction
+MBG Review & Track API is a RESTful backend designed to support monitoring, attendance tracking, and food menu review applications in school environments. This API provides features for authentication, user management, attendance data synchronization, catering menu management, student feedback, emergency reports, and data summary dashboards. All endpoints use JSON format and JWT for authentication.
 
-## Informasi Umum
+## General Information
 
 ### Base URL
 - Development: `http://localhost:3000/v1`
 - Production: `https://api.mbg-app.com/v1`
 
-### Autentikasi
-- API menggunakan JWT (JSON Web Token).
-- Token dikirim di header:
+### Authentication
+- API uses JWT (JSON Web Token).
+- Token sent in header:
   - `Authorization: Bearer <JWT_TOKEN>`
 
-### Format Respons
-- Sukses: Status 2xx, data dalam format JSON.
-- Error: Status 4xx/5xx, respons:
+### Response Format
+- Success: Status 2xx, data in JSON format.
+- Error: Status 4xx/5xx, response:
   ```json
   {
-    "error": "Pesan error yang deskriptif"
+    "error": "Descriptive error message"
   }
   ```
 
-### Kode Status Umum
-| Kode | Arti |
-|------|------|
-| 200  | OK (Permintaan berhasil) |
-| 201  | Created (Data berhasil dibuat) |
-| 400  | Bad Request (Permintaan tidak valid) |
-| 401  | Unauthorized (Token tidak valid/expired) |
-| 403  | Forbidden (Akses ditolak) |
-| 404  | Not Found (Resource tidak ditemukan) |
-| 422  | Unprocessable Entity (Validasi gagal) |
-| 500  | Internal Server Error (Kesalahan server) |
+### Common Status Codes
+| Code | Meaning |
+|------|---------|
+| 200  | OK (Request successful) |
+| 201  | Created (Data created successfully) |
+| 400  | Bad Request (Invalid request) |
+| 401  | Unauthorized (Token invalid/expired) |
+| 403  | Forbidden (Access denied) |
+| 404  | Not Found (Resource not found) |
+| 422  | Unprocessable Entity (Validation failed) |
+| 500  | Internal Server Error (Server error) |
 
 ---
 
@@ -88,10 +88,10 @@ API MBG Review & Track adalah backend RESTful yang dirancang untuk mendukung apl
 
 ### Authentication
 
-#### Register Pengguna
+#### Register User
 Endpoint: **POST /auth/register**
-Deskripsi: Registrasi akun baru.
-Otorisasi: Public
+Description: Register new account.
+Authorization: Public
 
 Request:
 - Headers:
@@ -99,12 +99,12 @@ Request:
 - Body:
   ```json
   {
-    "namaLengkap": "string (wajib)",
-    "email": "string (wajib)",
-    "password": "string (wajib, min 8 karakter)",
-    "role": "string (wajib, salah satu: ADMIN, SISWA, SEKOLAH, KATERING, DINKES)",
-    "nfcTagId": "string (opsional)",
-    "schoolId": "string (UUID, opsional, untuk role SISWA)"
+    "namaLengkap": "string (required)",
+    "email": "string (required)",
+    "password": "string (required, min 8 characters)",
+    "role": "string (required, one of: ADMIN, SISWA, SEKOLAH, KATERING, DINKES)",
+    "nfcTagId": "string (optional)",
+    "schoolId": "string (UUID, optional, for role SISWA)"
   }
   ```
 
@@ -123,19 +123,19 @@ Response:
   ```
 - 400 Bad Request:
   ```json
-  { "error": "Email sudah terdaftar." }
+  { "error": "Email already registered." }
   ```
 - 422 Unprocessable Entity:
   ```json
-  { "errors": [ { "msg": "Email tidak valid." } ] }
+  { "errors": [ { "msg": "Invalid email." } ] }
   ```
 
 ---
 
-#### Login Pengguna
+#### Login User
 Endpoint: **POST /auth/login**
-Deskripsi: Login dan mendapatkan token JWT.
-Otorisasi: Public
+Description: Login and get JWT token.
+Authorization: Public
 
 Request:
 - Headers:
@@ -143,8 +143,8 @@ Request:
 - Body:
   ```json
   {
-    "email": "string (wajib)",
-    "password": "string (wajib)"
+    "email": "string (required)",
+    "password": "string (required)"
   }
   ```
 
@@ -163,19 +163,19 @@ Response:
   ```
 - 401 Unauthorized:
   ```json
-  { "error": "Email atau password salah." }
+  { "error": "Invalid email or password." }
   ```
 - 422 Unprocessable Entity:
   ```json
-  { "errors": [ { "msg": "Email wajib diisi." } ] }
+  { "errors": [ { "msg": "Email is required." } ] }
   ```
 
 ---
 
 #### Get Profile
 Endpoint: **GET /auth/me**
-Deskripsi: Mendapatkan data profil pengguna yang sedang login.
-Otorisasi: Token (Semua role)
+Description: Get profile data of the currently logged-in user.
+Authorization: Token (All roles)
 
 Request:
 - Headers:
@@ -196,7 +196,7 @@ Response:
   ```
 - 401 Unauthorized:
   ```json
-  { "error": "Token tidak valid." }
+  { "error": "Invalid token." }
   ```
 
 ---
@@ -205,15 +205,15 @@ Response:
 
 #### Get All Users
 Endpoint: **GET /users**
-Deskripsi: Mendapatkan daftar semua pengguna (dengan paginasi).
-Otorisasi: Token (**Role: ADMIN, MASTERADMIN**)
+Description: Get a list of all users (with pagination).
+Authorization: Token (**Role: ADMIN, MASTERADMIN**)
 
 Request:
 - Headers:
   - Authorization: Bearer <JWT_TOKEN>
 - Query Parameters:
-  - page (integer, opsional, default: 1)
-  - limit (integer, opsional, default: 10)
+  - page (integer, optional, default: 1)
+  - limit (integer, optional, default: 10)
 
 Response:
 - 200 OK:
@@ -231,8 +231,8 @@ Response:
 
 #### Create User
 Endpoint: **POST /users**
-Deskripsi: Membuat pengguna baru (role selain MASTERADMIN).
-Otorisasi: Token (**Role: ADMIN, MASTERADMIN**)
+Description: Create a new user (roles other than MASTERADMIN).
+Authorization: Token (**Role: ADMIN, MASTERADMIN**)
 
 Request:
 - Headers:
@@ -240,12 +240,12 @@ Request:
 - Body:
   ```json
   {
-    "namaLengkap": "string (wajib)",
-    "email": "string (wajib)",
-    "password": "string (wajib)",
-    "role": "string (wajib)",
-    "nfcTagId": "string (opsional)",
-    "schoolId": "string (UUID, opsional)"
+    "namaLengkap": "string (required)",
+    "email": "string (required)",
+    "password": "string (required)",
+    "role": "string (required)",
+    "nfcTagId": "string (optional)",
+    "schoolId": "string (UUID, optional)"
   }
   ```
 
@@ -260,8 +260,8 @@ Response:
 
 #### Create User MASTERADMIN
 Endpoint: **POST /users/masteradmin**
-Deskripsi: Membuat user MASTERADMIN (khusus MASTERADMIN).
-Otorisasi: Token (**Role: MASTERADMIN**)
+Description: Create MASTERADMIN user (MASTERADMIN only).
+Authorization: Token (**Role: MASTERADMIN**)
 
 Request:
 - Headers:
@@ -269,12 +269,12 @@ Request:
 - Body:
   ```json
   {
-    "namaLengkap": "string (wajib)",
-    "email": "string (wajib)",
-    "password": "string (wajib)",
-    "role": "string (wajib, harus MASTERADMIN)",
-    "nfcTagId": "string (opsional)",
-    "schoolId": "string (UUID, opsional)"
+    "namaLengkap": "string (required)",
+    "email": "string (required)",
+    "password": "string (required)",
+    "role": "string (required, must be MASTERADMIN)",
+    "nfcTagId": "string (optional)",
+    "schoolId": "string (UUID, optional)"
   }
   ```
 
@@ -289,8 +289,8 @@ Response:
 
 #### Get User by ID
 Endpoint: **GET /users/:id**
-Deskripsi: Mendapatkan detail satu pengguna.
-Otorisasi: Token (**Role: ADMIN, MASTERADMIN**)
+Description: Get details of a single user.
+Authorization: Token (**Role: ADMIN, MASTERADMIN**)
 
 Request:
 - Headers:
@@ -309,8 +309,8 @@ Response:
 
 #### Update User
 Endpoint: **PUT /users/:id**
-Deskripsi: Memperbarui data pengguna. User dengan role MASTERADMIN hanya bisa diubah oleh MASTERADMIN.
-Otorisasi: Token (**Role: ADMIN, MASTERADMIN**)
+Description: Update user data. Users with MASTERADMIN role can only be modified by MASTERADMIN.
+Authorization: Token (**Role: ADMIN, MASTERADMIN**)
 
 Request:
 - Headers:
@@ -320,12 +320,12 @@ Request:
 - Body:
   ```json
   {
-    "namaLengkap": "string (opsional)",
-    "email": "string (opsional)",
-    "password": "string (opsional)",
-    "role": "string (opsional)",
-    "nfcTagId": "string (opsional)",
-    "schoolId": "string (UUID, opsional)"
+    "namaLengkap": "string (optional)",
+    "email": "string (optional)",
+    "password": "string (optional)",
+    "role": "string (optional)",
+    "nfcTagId": "string (optional)",
+    "schoolId": "string (UUID, optional)"
   }
   ```
 
@@ -340,8 +340,8 @@ Response:
 
 #### Delete User
 Endpoint: **DELETE /users/:id**
-Deskripsi: Menghapus pengguna. User dengan role MASTERADMIN hanya bisa dihapus oleh MASTERADMIN.
-Otorisasi: Token (**Role: ADMIN, MASTERADMIN**)
+Description: Delete a user. Users with MASTERADMIN role can only be deleted by MASTERADMIN.
+Authorization: Token (**Role: ADMIN, MASTERADMIN**)
 
 Request:
 - Headers:
@@ -358,24 +358,24 @@ Response:
 
 ---
 
-### Attendance (Sinkronisasi Raspberry Pi)
+### Attendance (Raspberry Pi Synchronization)
 
 #### Sync Attendance
 Endpoint: **POST /attendance/sync**
-Deskripsi: Sinkronisasi data absensi dari perangkat Raspberry Pi ke server.
-Otorisasi: Header API Key (X-API-KEY, didapat dari sekolah)
+Description: Synchronize attendance data from Raspberry Pi device to server.
+Authorization: Header API Key (X-API-KEY, obtained from school)
 
 Request:
 - Headers:
   - Content-Type: application/json
-  - X-API-KEY: string (wajib, diambil dari field apiKey pada model School)
+  - X-API-KEY: string (required, taken from apiKey field in School model)
 - Body:
   ```json
   {
     "logs": [
       {
-        "nfcTagId": "string (wajib)",
-        "timestamp": "string (ISO 8601, wajib)"
+        "nfcTagId": "string (required)",
+        "timestamp": "string (ISO 8601, required)"
       }
     ]
   }
@@ -386,8 +386,8 @@ Response:
   ```json
   { "message": "Attendance logs synced successfully.", "count": 10 }
   ```
-- 403 Forbidden (API Key salah)
-- 404 Not Found (Tidak ada log valid)
+- 403 Forbidden (Invalid API Key)
+- 404 Not Found (No valid logs)
 
 ---
 
@@ -395,8 +395,8 @@ Response:
 
 #### Create Catering Log
 Endpoint: **POST /catering**
-Deskripsi: Katering mengunggah log menu harian.
-Otorisasi: Token (**Role: KATERING**)
+Description: Caterer uploads daily menu log.
+Authorization: Token (**Role: KATERING**)
 
 Request:
 - Headers:
@@ -404,11 +404,11 @@ Request:
 - Body:
   ```json
   {
-    "schoolId": "string (UUID, wajib)",
-    "tanggal": "string (YYYY-MM-DD, wajib)",
-    "deskripsiMenu": "string (wajib)",
-    "fotoMenuUrl": "string (wajib)",
-    "catatan": "string (opsional)"
+    "schoolId": "string (UUID, required)",
+    "tanggal": "string (YYYY-MM-DD, required)",
+    "deskripsiMenu": "string (required)",
+    "fotoMenuUrl": "string (required)",
+    "catatan": "string (optional)"
   }
   ```
 
@@ -423,15 +423,15 @@ Response:
 
 #### Get Catering Logs by Caterer
 Endpoint: **GET /catering/me**
-Deskripsi: Melihat log menu harian yang diunggah oleh katering yang sedang login.
-Otorisasi: Token (**Role: KATERING**)
+Description: View daily menu logs uploaded by the currently logged-in caterer.
+Authorization: Token (**Role: KATERING**)
 
 Request:
 - Headers:
   - Authorization: Bearer <JWT_TOKEN>
 - Query Parameters:
-  - page (integer, opsional, default: 1)
-  - limit (integer, opsional, default: 10)
+  - page (integer, optional, default: 1)
+  - limit (integer, optional, default: 10)
 
 Response:
 - 200 OK:
@@ -446,12 +446,12 @@ Response:
 
 ---
 
-### Feedback (Siswa)
+### Feedback (Student)
 
 #### Get Today's Menu
 Endpoint: **GET /feedback/menu/today**
-Deskripsi: Mendapatkan menu katering hari ini untuk sekolah siswa yang sedang login.
-Otorisasi: Token (**Role: SISWA**)
+Description: Get today's catering menu for the currently logged-in student's school.
+Authorization: Token (**Role: SISWA**)
 
 Request:
 - Headers:
@@ -462,14 +462,14 @@ Response:
   ```json
   { "menu": { ...cateringLog } }
   ```
-- 404 Not Found (Menu belum tersedia)
+- 404 Not Found (Menu not available)
 
 ---
 
 #### Submit Feedback
 Endpoint: **POST /feedback**
-Deskripsi: Siswa memberikan feedback pada menu katering hari ini.
-Otorisasi: Token (**Role: SISWA**)
+Description: Student submits feedback for today's catering menu.
+Authorization: Token (**Role: SISWA**)
 
 Request:
 - Headers:
@@ -477,9 +477,9 @@ Request:
 - Body:
   ```json
   {
-    "cateringLogId": "string (UUID, wajib)",
-    "rating": "integer (wajib, 1-5)",
-    "komentar": "string (opsional)"
+    "cateringLogId": "string (UUID, required)",
+    "rating": "integer (required, 1-5)",
+    "komentar": "string (optional)"
   }
   ```
 
@@ -494,8 +494,8 @@ Response:
 
 #### Get My Feedback History
 Endpoint: **GET /feedback/me**
-Deskripsi: Melihat riwayat feedback yang pernah dikirim oleh siswa.
-Otorisasi: Token (**Role: SISWA**)
+Description: View feedback history submitted by the student.
+Authorization: Token (**Role: SISWA**)
 
 Request:
 - Headers:
@@ -511,10 +511,10 @@ Response:
 
 ### Emergency Reports
 
-#### Create Emergency Report (Sekolah)
+#### Create Emergency Report (School)
 Endpoint: **POST /reports/emergency**
-Deskripsi: Sekolah mengirim laporan darurat (misal, dugaan keracunan).
-Otorisasi: Token (**Role: SEKOLAH**)
+Description: School sends emergency report (e.g., suspected food poisoning).
+Authorization: Token (**Role: SEKOLAH**)
 
 Request:
 - Headers:
@@ -522,7 +522,7 @@ Request:
 - Body:
   ```json
   {
-    "deskripsi": "string (wajib)"
+    "deskripsi": "string (required)"
   }
   ```
 
@@ -537,8 +537,8 @@ Response:
 
 #### Get Emergency Reports by My School
 Endpoint: **GET /reports/emergency/me**
-Deskripsi: Melihat riwayat laporan darurat yang dikirim oleh sekolah.
-Otorisasi: Token (**Role: SEKOLAH**)
+Description: View history of emergency reports sent by the school.
+Authorization: Token (**Role: SEKOLAH**)
 
 Request:
 - Headers:
@@ -552,18 +552,18 @@ Response:
 
 ---
 
-#### Get All Emergency Reports (Admin & Dinkes)
+#### Get All Emergency Reports (Admin & Health Dept)
 Endpoint: **GET /reports/emergency**
-Deskripsi: Melihat semua laporan darurat dari seluruh sekolah.
-Otorisasi: Token (**Role: ADMIN, DINKES**)
+Description: View all emergency reports from all schools.
+Authorization: Token (**Role: ADMIN, DINKES**)
 
 Request:
 - Headers:
   - Authorization: Bearer <JWT_TOKEN>
 - Query Parameters:
-  - status (string, opsional) - Filter status laporan
-  - page (integer, opsional, default: 1)
-  - limit (integer, opsional, default: 10)
+  - status (string, optional) - Filter report status
+  - page (integer, optional, default: 1)
+  - limit (integer, optional, default: 10)
 
 Response:
 - 200 OK:
@@ -578,10 +578,10 @@ Response:
 
 ---
 
-#### Update Emergency Report Status (Admin & Dinkes)
+#### Update Emergency Report Status (Admin & Health Dept)
 Endpoint: **PUT /reports/emergency/:id**
-Deskripsi: Mengubah status laporan darurat.
-Otorisasi: Token (**Role: ADMIN, DINKES**)
+Description: Update emergency report status.
+Authorization: Token (**Role: ADMIN, DINKES**)
 
 Request:
 - Headers:
@@ -591,7 +591,7 @@ Request:
 - Body:
   ```json
   {
-    "status": "string (wajib, salah satu: BARU, DITINDAKLANJUTI, SELESAI)"
+    "status": "string (required, one of: BARU, DITINDAKLANJUTI, SELESAI)"
   }
   ```
 
@@ -608,8 +608,8 @@ Response:
 
 #### Get School Dashboard Summary
 Endpoint: **GET /dashboard/school**
-Deskripsi: Ringkasan data sekolah (total siswa, jumlah absen hari ini, laporan darurat baru).
-Otorisasi: Token (**Role: SEKOLAH**)
+Description: School data summary (total students, today's attendance count, new emergency reports).
+Authorization: Token (**Role: SEKOLAH**)
 
 Request:
 - Headers:
@@ -629,8 +629,8 @@ Response:
 
 #### Get Catering Dashboard Summary
 Endpoint: **GET /dashboard/catering**
-Deskripsi: Ringkasan rating dan feedback menu katering hari ini.
-Otorisasi: Token (**Role: KATERING**)
+Description: Summary of ratings and feedback for today's catering menu.
+Authorization: Token (**Role: KATERING**)
 
 Request:
 - Headers:
@@ -649,8 +649,8 @@ Response:
 
 #### Get Admin Dashboard Summary
 Endpoint: **GET /dashboard/admin**
-Deskripsi: Ringkasan global (total sekolah, total pengguna, total laporan darurat).
-Otorisasi: Token (**Role: ADMIN, DINKES**)
+Description: Global summary (total schools, total users, total emergency reports).
+Authorization: Token (**Role: ADMIN, DINKES**)
 
 Request:
 - Headers:
@@ -668,7 +668,7 @@ Response:
 
 ---
 
-## Contoh Struktur Objek
+## Example Object Structures
 
 ### User
 ```json
@@ -678,8 +678,8 @@ Response:
   "email": "string",
   "password": "string (hashed)",
   "role": "MASTERADMIN | ADMIN | SISWA | SEKOLAH | KATERING | DINKES",
-  "nfcTagId": "string (opsional)",
-  "SchoolId": "string (UUID, opsional)"
+  "nfcTagId": "string (optional)",
+  "SchoolId": "string (UUID, optional)"
 }
 ```
 
@@ -700,7 +700,7 @@ Response:
   "tanggal": "string (YYYY-MM-DD)",
   "deskripsiMenu": "string",
   "fotoMenuUrl": "string",
-  "catatan": "string (opsional)",
+  "catatan": "string (optional)",
   "SchoolId": "string (UUID)",
   "UserId": "string (UUID)"
 }
@@ -711,7 +711,7 @@ Response:
 {
   "id": "string (UUID)",
   "rating": "integer (1-5)",
-  "komentar": "string (opsional)",
+  "komentar": "string (optional)",
   "timestamp": "string (ISO 8601)",
   "CateringLogId": "string (UUID)",
   "UserId": "string (UUID)"
@@ -732,14 +732,14 @@ Response:
 
 ---
 
-## Contoh Error Validasi
+## Example Validation Error
 
-Jika validasi gagal, respons error bisa berupa:
+If validation fails, the error response may be:
 ```json
 {
   "errors": [
-    { "msg": "Email tidak valid.", "param": "email", "location": "body" },
-    { "msg": "Password wajib diisi.", "param": "password", "location": "body" }
+    { "msg": "Invalid email.", "param": "email", "location": "body" },
+    { "msg": "Password is required.", "param": "password", "location": "body" }
   ]
 }
 ```
