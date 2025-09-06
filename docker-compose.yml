@@ -15,7 +15,7 @@ services:
 
   api:
     build: .
-    container_name: mbg-backend-fastapi
+    container_name: mbg-backend
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - JWT_SECRET=${JWT_SECRET:-dev-secret-change-me}
