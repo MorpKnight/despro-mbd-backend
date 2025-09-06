@@ -33,11 +33,22 @@ class User(Base):
     role: Mapped[str] = mapped_column(Enum(*[
         "MASTERADMIN", "ADMIN", "SISWA", "SEKOLAH", "KATERING", "DINKES"
     ], name="roleenum"), nullable=False)
+
     nfcTagId: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
+
+    # Status approval untuk siswa (role SISWA), default PENDING jika siswa baru daftar
+    status: Mapped[str] = mapped_column(Enum(*["PENDING", "APPROVED", "REJECTED"], name="registrationstatusenum"), nullable=True, default=None)
 
     SchoolId: Mapped[str | None] = mapped_column(String, ForeignKey("schools.id"), nullable=True)
     school = relationship("School", back_populates="users")
     attendance_logs = relationship("AttendanceLog", back_populates="user", cascade="all, delete-orphan")
+
+    # Relasi ke audit trail approval
+    registration_audits = relationship("RegistrationAudit", foreign_keys="RegistrationAudit.user_id", back_populates="user", cascade="all, delete-orphan")
+
+    # Untuk reset password via OTP
+    otp_code: Mapped[str | None] = mapped_column(String, nullable=True)
+    otp_expiry: Mapped[str | None] = mapped_column(String, nullable=True)
 
     def set_password(self, raw: str) -> None:
         self.password = pwd_context.hash(raw)

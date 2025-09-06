@@ -1,3 +1,49 @@
+import random
+from datetime import datetime, timedelta
+
+# Request OTP untuk reset password
+from pydantic import BaseModel
+
+class RequestOTP(BaseModel):
+    email: EmailStr
+
+@router.post("/request-reset-password")
+def request_reset_password(payload: RequestOTP, db: Session = Depends(get_db)):
+    user = db.execute(select(User).where(User.email == payload.email)).scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    otp = str(random.randint(100000, 999999))
+    expiry = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+    user.otp_code = otp
+    user.otp_expiry = expiry
+    db.add(user)
+    db.commit()
+    print(f"[OTP] Kode OTP reset password untuk {user.email}: {otp} (berlaku 10 menit)")
+    return {"success": True, "message": "OTP sent (dummy, check console)"}
+
+# Reset password dengan OTP
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    new_password: str
+
+@router.post("/reset-password")
+def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+    user = db.execute(select(User).where(User.email == payload.email)).scalars().first()
+    if not user or not user.otp_code or not user.otp_expiry:
+        raise HTTPException(status_code=400, detail="OTP not requested or expired")
+    # Cek expiry
+    if datetime.utcnow() > datetime.fromisoformat(user.otp_expiry):
+        raise HTTPException(status_code=400, detail="OTP expired")
+    if user.otp_code != payload.otp:
+        raise HTTPException(status_code=400, detail="OTP salah")
+    user.password = hash_password(payload.new_password)
+    user.otp_code = None
+    user.otp_expiry = None
+    db.add(user)
+    db.commit()
+    print(f"[NOTIF] Password user {user.email} berhasil direset.")
+    return {"success": True, "message": "Password reset successful"}
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from app.core.rate_limit import limiter
 from sqlalchemy.orm import Session
@@ -10,26 +56,88 @@ from pydantic import BaseModel, EmailStr
 from app.core.security import create_access_token, verify_password, hash_password
 from app.api.deps import get_current_user
 
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+# Request OTP untuk reset password
+from pydantic import BaseModel, EmailStr
+import random
+from datetime import datetime, timedelta
 
+class RequestOTP(BaseModel):
+    email: EmailStr
+
+@router.post("/request-reset-password")
+def request_reset_password(payload: RequestOTP, db: Session = Depends(get_db)):
+    user = db.execute(select(User).where(User.email == payload.email)).scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    otp = str(random.randint(100000, 999999))
+    expiry = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
+    user.otp_code = otp
+    user.otp_expiry = expiry
+    db.add(user)
+    db.commit()
+    print(f"[OTP] Kode OTP reset password untuk {user.email}: {otp} (berlaku 10 menit)")
+    return {"success": True, "message": "OTP sent (dummy, check console)"}
+
+# Reset password dengan OTP
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    new_password: str
+
+@router.post("/reset-password")
+def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+    user = db.execute(select(User).where(User.email == payload.email)).scalars().first()
+    if not user or not user.otp_code or not user.otp_expiry:
+        raise HTTPException(status_code=400, detail="OTP not requested or expired")
+    # Cek expiry
+    if datetime.utcnow() > datetime.fromisoformat(user.otp_expiry):
+        raise HTTPException(status_code=400, detail="OTP expired")
+    if user.otp_code != payload.otp:
+        raise HTTPException(status_code=400, detail="OTP salah")
+    user.password = hash_password(payload.new_password)
+    user.otp_code = None
+    user.otp_expiry = None
+    db.add(user)
+    db.commit()
+    print(f"[NOTIF] Password user {user.email} berhasil direset.")
+    return {"success": True, "message": "Password reset successful"}
+
+
+
+# Register endpoint khusus siswa (user mendaftar sendiri, status PENDING, wajib pilih sekolah)
 @router.post("/register", response_model=UserOut)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
-    # email unique
+    # Hanya siswa yang bisa register sendiri
+    if payload.role != "SISWA":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only SISWA can self-register")
+    # Email harus unik
     exists = db.execute(select(User).where(User.email == payload.email)).scalars().first()
     if exists:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already used")
+        # Jika status REJECTED, boleh daftar ulang (hapus user lama)
+        if exists.role == "SISWA" and exists.status == "REJECTED":
+            db.delete(exists)
+            db.commit()
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already used")
+    # Wajib pilih sekolah
+    if not payload.SchoolId:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="SchoolId is required")
     user = User(
         namaLengkap=payload.namaLengkap,
         email=payload.email,
-        role=payload.role,
+        role="SISWA",
         nfcTagId=payload.nfcTagId,
         SchoolId=payload.SchoolId,
         password=hash_password(payload.password),
+        status="PENDING",
     )
     db.add(user)
     db.commit()
     db.refresh(user)
+    print(f"[NOTIF] Siswa baru mendaftar: {user.email}, menunggu approval admin sekolah.")
     return user
 
 

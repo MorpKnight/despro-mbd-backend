@@ -3,13 +3,72 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 from app.db.session import get_db
-from app.models import User
+from app.models import User, RegistrationAudit
 from app.schemas.user import UserOut, UserCreate
+from pydantic import BaseModel
 from app.core.security import hash_password
-from app.core.security import hash_password
-from app.api.deps import require_roles
+from app.api.deps import require_roles, get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+# List siswa yang status PENDING (khusus admin sekolah)
+@router.get("/pending-siswa", response_model=list[UserOut])
+def list_pending_siswa(db: Session = Depends(get_db), user=Depends(get_current_user)):
+    # Hanya admin sekolah yang boleh akses
+    if user.role != "ADMIN":
+        raise HTTPException(status_code=403, detail="Only ADMIN can view pending siswa")
+    # Hanya siswa di sekolah yang sama
+    siswa = db.execute(
+        select(User).where(
+            User.role == "SISWA",
+            User.status == "PENDING",
+            User.SchoolId == user.SchoolId
+        )
+    ).scalars().all()
+    return siswa
+
+# Model untuk approval/reject
+class ApprovalRequest(BaseModel):
+    approve: bool
+    reason: str | None = None
+
+# Endpoint approve/reject siswa (khusus admin sekolah)
+@router.post("/approve-siswa/{user_id}")
+def approve_siswa(
+    user_id: str,
+    payload: ApprovalRequest,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user)
+):
+    # Hanya admin sekolah yang boleh approve
+    if user.role != "ADMIN":
+        raise HTTPException(status_code=403, detail="Only ADMIN can approve/reject siswa")
+    siswa = db.execute(
+        select(User).where(
+            User.id == user_id,
+            User.role == "SISWA",
+            User.SchoolId == user.SchoolId
+        )
+    ).scalars().first()
+    if not siswa:
+        raise HTTPException(status_code=404, detail="Siswa not found or not in your school")
+    if siswa.status != "PENDING":
+        raise HTTPException(status_code=400, detail="Siswa already processed")
+    # Update status
+    siswa.status = "APPROVED" if payload.approve else "REJECTED"
+    db.add(siswa)
+    # Simpan audit trail
+    audit = RegistrationAudit(
+        user_id=siswa.id,
+        admin_id=user.id,
+        status=siswa.status,
+        reason=payload.reason,
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(siswa)
+    print(f"[NOTIF] Siswa {siswa.email} status: {siswa.status}. Reason: {payload.reason}")
+    return {"success": True, "status": siswa.status}
 
 @router.get("/", response_model=list[UserOut])
 def list_users(db: Session = Depends(get_db), user=Depends(require_roles("MASTERADMIN"))):
@@ -59,6 +118,7 @@ def delete_user(user_id: str, db: Session = Depends(get_db), user=Depends(requir
     db.delete(u)
     db.commit()
     return {"success": True}
+
 @router.post("/masteradmin", response_model=UserOut)
 def create_masteradmin(payload: UserCreate, db: Session = Depends(get_db), user=Depends(require_roles("MASTERADMIN"))):
     exists = db.execute(select(User).where(User.email == payload.email)).scalars().first()
