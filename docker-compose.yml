@@ -35,8 +35,8 @@ services:
       - db
     # ports:
     #   - "8000:8000"
-    volumes:
-      - mbg-data:/app
+    # volumes:
+    #   - mbg-data:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     networks:
       - cloudflared-private
@@ -48,6 +48,6 @@ networks:
   internal:
     driver: bridge
 
-volumes:
-  mbg-data:
-  pgdata:
+# volumes:
+#   mbg-data:
+#   pgdata:
