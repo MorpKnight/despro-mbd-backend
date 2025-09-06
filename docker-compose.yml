@@ -30,6 +30,7 @@ services:
       - CORS_WHITELIST=${CORS_WHITELIST:-http://localhost:8000,http://127.0.0.1:8000,https://mbg.mrt.qzz.io}
       - SEED_MASTER_ADMIN=${SEED_MASTER_ADMIN:-true}
       - SECURITY_ENABLED=${SECURITY_ENABLED:-false}
+      - CORS_ENABLED=${CORS_ENABLED:-false}
     depends_on:
       - db
     # ports:

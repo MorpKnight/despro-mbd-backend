@@ -5,6 +5,8 @@ import os
 
 
 class Settings(BaseSettings):
+    # CORS feature toggle
+    CORS_ENABLED: bool = os.getenv("CORS_ENABLED", "false").lower() in {"1","true","yes","on"}
     # Security feature toggle
     SECURITY_ENABLED: bool = os.getenv("SECURITY_ENABLED", "false").lower() in {"1","true","yes","on"}
     # App

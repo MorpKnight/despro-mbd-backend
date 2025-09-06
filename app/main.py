@@ -94,15 +94,16 @@ app.add_middleware(SlowAPIMiddleware)
 if settings.SECURITY_ENABLED:
     app.add_middleware(SecurityHeadersMiddleware)
 
-# CORS whitelist
-cors_origins = [o.strip() for o in settings.CORS_WHITELIST.split(",") if o.strip()]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS whitelist (can be disabled via env)
+if settings.CORS_ENABLED:
+    cors_origins = [o.strip() for o in settings.CORS_WHITELIST.split(",") if o.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Routers
 app.include_router(health_router)
