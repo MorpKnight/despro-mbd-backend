@@ -1,24 +1,21 @@
-
-# ===================== IMPORTS =====================
+import io
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 from datetime import datetime
+from typing import Optional
+import pandas as pd
+
 from app.db.session import get_db
 from app.models import AttendanceLog, User, School
 from app.models.attendance_correction import AttendanceCorrection
-from pydantic import BaseModel
 from app.middlewares.api_key import require_api_key
 from app.schemas.attendance_log import AttendanceLogOut
 from app.schemas.attendance_correction import AttendanceCorrectionCreate, AttendanceCorrectionOut, AttendanceCorrectionReview
-from typing import Optional
-import pandas as pd
-from fastapi.responses import StreamingResponse
-import io
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
-
-# ===================== ENDPOINTS =====================
 
 # Absensi manual oleh admin
 class ManualAttendanceCreate(BaseModel):
@@ -257,190 +254,6 @@ def sync_attendance(payload: AttendanceSyncRequest, request: Request, db: Sessio
     return {"success": True, "inserted": inserted}
 
 # Log absensi (device/manual)
-@router.post("/log")
-def log_attendance(
-    user_id: str,
-    request: Request,
-    db: Session = Depends(get_db)
-):
-    school = require_api_key(request)
-    user = db.execute(select(User).where(User.id == user_id)).scalars().first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    log = AttendanceLog(
-        timestamp=datetime.utcnow(),
-        UserId=user.id,
-        SchoolId=school.id,
-    )
-    db.add(log)
-    db.commit()
-    db.refresh(log)
-    return {"success": True, "log_id": log.id}
-
-# Endpoint statistik absensi harian per user per bulan
-@router.get("/statistik/{user_id}")
-def statistik_absensi_user(
-    user_id: str,
-    month: Optional[int] = None,
-    year: Optional[int] = None,
-    db: Session = Depends(get_db)
-):
-    now = datetime.utcnow()
-    month = month or now.month
-    year = year or now.year
-    user = db.execute(select(User).where(User.id == user_id)).scalars().first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    logs = db.query(AttendanceLog).filter(
-        AttendanceLog.UserId == user_id,
-        func.extract('month', AttendanceLog.timestamp) == month,
-        func.extract('year', AttendanceLog.timestamp) == year
-    ).all()
-    # Hitung jumlah hadir per tanggal
-    statistik = {}
-    for log in logs:
-        tanggal = log.timestamp.strftime("%Y-%m-%d")
-        statistik[tanggal] = statistik.get(tanggal, 0) + 1
-    # Urutkan tanggal
-    statistik_sorted = dict(sorted(statistik.items()))
-    return {
-        "user_id": user_id,
-        "nama": user.namaLengkap,
-        "month": month,
-        "year": year,
-        "statistik_harian": statistik_sorted
-    }
-import pandas as pd
-from fastapi.responses import StreamingResponse
-import io
-# Endpoint export absensi ke Excel/CSV
-@router.get("/export/{user_id}")
-def export_absensi_user(
-    user_id: str,
-    month: Optional[int] = None,
-    year: Optional[int] = None,
-    format: str = "xlsx",
-    db: Session = Depends(get_db)
-):
-    now = datetime.utcnow()
-    month = month or now.month
-    year = year or now.year
-    user = db.execute(select(User).where(User.id == user_id)).scalars().first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    logs = db.query(AttendanceLog).filter(
-        AttendanceLog.UserId == user_id,
-        func.extract('month', AttendanceLog.timestamp) == month,
-        func.extract('year', AttendanceLog.timestamp) == year
-    ).all()
-    data = [
-        {
-            "Tanggal": log.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-            "UserId": log.UserId,
-            "SchoolId": log.SchoolId,
-        }
-        for log in logs
-    ]
-    df = pd.DataFrame(data)
-    if format == "csv":
-        output = io.StringIO()
-        df.to_csv(output, index=False)
-        output.seek(0)
-        return StreamingResponse(output, media_type="text/csv", headers={
-            "Content-Disposition": f"attachment; filename=absensi_{user_id}_{month}_{year}.csv"
-        })
-    else:
-        output = io.BytesIO()
-        df.to_excel(output, index=False, engine="openpyxl")
-        output.seek(0)
-        return StreamingResponse(output, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={
-            "Content-Disposition": f"attachment; filename=absensi_{user_id}_{month}_{year}.xlsx"
-        })
-
-# Endpoint rekap absensi per user per bulan
-@router.get("/rekap/{user_id}")
-def rekap_absensi_user(
-    user_id: str,
-    month: Optional[int] = None,
-    year: Optional[int] = None,
-    db: Session = Depends(get_db),
-    request: Request = None
-):
-    # Default: bulan & tahun sekarang
-    now = datetime.utcnow()
-    month = month or now.month
-    year = year or now.year
-    user = db.execute(select(User).where(User.id == user_id)).scalars().first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    logs = db.query(AttendanceLog).filter(
-        AttendanceLog.UserId == user_id,
-        func.extract('month', AttendanceLog.timestamp) == month,
-        func.extract('year', AttendanceLog.timestamp) == year
-    ).all()
-    total_hadir = len(logs)
-    # Untuk pengembangan: bisa tambahkan status (izin, alfa, dsb) jika ada field status di AttendanceLog
-    return {
-        "user_id": user_id,
-        "nama": user.namaLengkap,
-        "month": month,
-        "year": year,
-        "total_hadir": total_hadir
-    }
-# Endpoint rekap absensi per user per bulan
-@router.get("/rekap/{user_id}")
-def rekap_absensi_user(
-    user_id: str,
-    month: Optional[int] = None,
-    year: Optional[int] = None,
-    db: Session = Depends(get_db),
-    request: Request = None
-):
-    # Default: bulan & tahun sekarang
-    now = datetime.utcnow()
-    month = month or now.month
-    year = year or now.year
-    user = db.execute(select(User).where(User.id == user_id)).scalars().first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    logs = db.query(AttendanceLog).filter(
-        AttendanceLog.UserId == user_id,
-        func.extract('month', AttendanceLog.timestamp) == month,
-        func.extract('year', AttendanceLog.timestamp) == year
-    ).all()
-    total_hadir = len(logs)
-    # Untuk pengembangan: bisa tambahkan status (izin, alfa, dsb) jika ada field status di AttendanceLog
-    return {
-        "user_id": user_id,
-        "nama": user.namaLengkap,
-        "month": month,
-        "year": year,
-        "total_hadir": total_hadir
-    }
-class AttendanceSyncRequest(BaseModel):
-    logs: list[dict]
-
-@router.post("/sync")
-def sync_attendance(payload: AttendanceSyncRequest, request: Request, db: Session = Depends(get_db)):
-    school = require_api_key(request)
-    inserted = []
-    for log_data in payload.logs:
-        user_id = log_data.get("UserId")
-        timestamp = log_data.get("timestamp")
-        user = db.execute(select(User).where(User.id == user_id)).scalars().first()
-        if not user:
-            continue
-        log = AttendanceLog(
-            timestamp=timestamp or datetime.utcnow(),
-            UserId=user.id,
-            SchoolId=school.id,
-        )
-        db.add(log)
-        db.commit()
-        db.refresh(log)
-        inserted.append(log.id)
-    return {"success": True, "inserted": inserted}
-
 @router.post("/log")
 def log_attendance(
     user_id: str,

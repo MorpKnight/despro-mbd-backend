@@ -63,6 +63,7 @@ def delete_report(report_id: str, db: Session = Depends(get_db), user=Depends(re
     db.delete(report)
     db.commit()
     return {"success": True}
+
 @router.get("/me", response_model=list[dict])
 def emergency_me(db: Session = Depends(get_db), user=Depends(require_roles("SISWA", "SEKOLAH", "MASTERADMIN"))):
     # Asumsi: user.id == pelapor

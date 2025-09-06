@@ -24,15 +24,18 @@ def dashboard_stats(db: Session = Depends(get_db), user=Depends(require_roles("M
         "feedbacks": feedback_count,
         "emergency_reports": emergency_count,
     }
+
 @router.get("/school")
 def dashboard_school(db: Session = Depends(get_db), user=Depends(require_roles("SEKOLAH", "MASTERADMIN"))):
     # Contoh: jumlah siswa, log kehadiran, dsb
     attendance_count = db.execute(select(func.count(AttendanceLog.id))).scalar()
     return {"attendance_logs": attendance_count}
+
 @router.get("/catering")
 def dashboard_catering(db: Session = Depends(get_db), user=Depends(require_roles("KATERING", "MASTERADMIN"))):
     catering_count = db.execute(select(func.count(CateringLog.id))).scalar()
     return {"catering_logs": catering_count}
+
 @router.get("/admin")
 def dashboard_admin(db: Session = Depends(get_db), user=Depends(require_roles("ADMIN", "MASTERADMIN"))):
     user_count = db.execute(select(func.count(User.id))).scalar()

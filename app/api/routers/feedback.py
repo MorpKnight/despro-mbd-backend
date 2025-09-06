@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
-from datetime import datetime
+from datetime import datetime, date
 
 from app.db.session import get_db
 from app.models import Feedback
@@ -63,12 +63,13 @@ def delete_feedback(log_id: str, db: Session = Depends(get_db), user=Depends(req
     db.delete(log)
     db.commit()
     return {"success": True}
+
 @router.get("/menu/today", response_model=list[dict])
 def feedback_menu_today(db: Session = Depends(get_db), user=Depends(require_roles("SISWA", "MASTERADMIN"))):
-    from datetime import date
     today = date.today()
     logs = db.execute(select(Feedback).where(func.date(Feedback.timestamp) == today)).scalars().all()
     return [log.__dict__ for log in logs]
+
 @router.get("/me", response_model=list[dict])
 def feedback_me(db: Session = Depends(get_db), user=Depends(require_roles("SISWA"))):
     # Asumsi: user.id == siswa yang bersangkutan

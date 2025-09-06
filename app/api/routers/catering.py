@@ -70,6 +70,7 @@ def delete_catering(log_id: str, db: Session = Depends(get_db), user=Depends(req
     db.delete(log)
     db.commit()
     return {"success": True}
+
 @router.get("/me", response_model=list[dict])
 def catering_me(db: Session = Depends(get_db), user=Depends(require_roles("KATERING"))):
     # Asumsi: user.id == katering yang bersangkutan
