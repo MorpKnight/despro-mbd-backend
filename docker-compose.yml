@@ -29,8 +29,8 @@ services:
       - DB_PASSWORD=postgres
       - CORS_WHITELIST=${CORS_WHITELIST:-http://localhost:8000,http://127.0.0.1:8000,https://mbg.mrt.qzz.io}
       - SEED_MASTER_ADMIN=${SEED_MASTER_ADMIN:-true}
-      - SECURITY_ENABLED=${SECURITY_ENABLED:-false}
-      - CORS_ENABLED=${CORS_ENABLED:-false}
+      - SECURITY_ENABLED=${SECURITY_ENABLED:-true}
+      - CORS_ENABLED=${CORS_ENABLED:-true}
     depends_on:
       - db
     # ports:
