@@ -90,8 +90,9 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=trusted_hosts)
 # Rate limit middleware
 app.add_middleware(SlowAPIMiddleware)
 
-# Security headers (Helmet parity)
-app.add_middleware(SecurityHeadersMiddleware)
+# Security headers (Helmet parity, can be disabled via env)
+if settings.SECURITY_ENABLED:
+    app.add_middleware(SecurityHeadersMiddleware)
 
 # CORS whitelist
 cors_origins = [o.strip() for o in settings.CORS_WHITELIST.split(",") if o.strip()]

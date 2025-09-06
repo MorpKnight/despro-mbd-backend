@@ -5,6 +5,8 @@ import os
 
 
 class Settings(BaseSettings):
+    # Security feature toggle
+    SECURITY_ENABLED: bool = os.getenv("SECURITY_ENABLED", "false").lower() in {"1","true","yes","on"}
     # App
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
