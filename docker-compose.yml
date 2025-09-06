@@ -1,7 +1,8 @@
 version: '3.8'
 services:
   api:
-    build: .
+    build:
+      context: ./despro-mbd-backend-fastapi
     container_name: mbg-backend-fastapi
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
@@ -10,14 +11,19 @@ services:
       - DATABASE_URL=${DATABASE_URL:-sqlite:///./mbg_fastapi_dev.db}
       - CORS_WHITELIST=${CORS_WHITELIST:-http://localhost:8000,http://127.0.0.1:8000}
       - SEED_MASTER_ADMIN=${SEED_MASTER_ADMIN:-"true"}
-    # ports:
-    #   - "8000:8000"
+    ports:
+      - "8000:8000"
+    # Use a named volume for persistent data, like the database file
     volumes:
-      - ./:/app
-    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+      - mbg-data:/app/mbg_fastapi_dev.db
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     networks:
       - cloudflared-private
 
 networks:
   cloudflared-private:
     external: true
+
+# Define the named volume
+volumes:
+  mbg-data:
