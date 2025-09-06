@@ -1,38 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from app.core.rate_limit import limiter
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-
-from app.db.session import get_db
-from app.models import User
-from app.schemas.user import UserCreate, UserOut
 from pydantic import BaseModel, EmailStr
-from app.core.security import create_access_token, verify_password, hash_password
-from app.api.deps import get_current_user
-import random
 from datetime import datetime, timedelta
+import random
 
-router = APIRouter(prefix="/auth", tags=["auth"])
-from fastapi import APIRouter, Depends, HTTPException, status, Request
 from app.core.rate_limit import limiter
-from sqlalchemy.orm import Session
-from sqlalchemy import select
-
 from app.db.session import get_db
 from app.models import User
 from app.schemas.user import UserCreate, UserOut
-from pydantic import BaseModel, EmailStr
 from app.core.security import create_access_token, verify_password, hash_password
 from app.api.deps import get_current_user
-
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # Request OTP untuk reset password
-from pydantic import BaseModel, EmailStr
-import random
-from datetime import datetime, timedelta
-
 class RequestOTP(BaseModel):
     email: EmailStr
 
@@ -74,8 +56,6 @@ def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db))
     print(f"[NOTIF] Password user {user.email} berhasil direset.")
     return {"success": True, "message": "Password reset successful"}
 
-
-
 # Register endpoint khusus siswa (user mendaftar sendiri, status PENDING, wajib pilih sekolah)
 @router.post("/register", response_model=UserOut)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
@@ -109,11 +89,9 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
     print(f"[NOTIF] Siswa baru mendaftar: {user.email}, menunggu approval admin sekolah.")
     return user
 
-
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
-
 
 @router.post("/login")
 @limiter.limit("5/minute")
@@ -123,7 +101,6 @@ def login(payload: LoginRequest, db: Session = Depends(get_db), request: Request
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     token = create_access_token(str(user.id))
     return {"success": True, "token": token, "user": UserOut.model_validate(user).model_dump()}
-
 
 @router.get("/me", response_model=UserOut)
 def me(current=Depends(get_current_user)):
