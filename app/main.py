@@ -75,8 +75,6 @@ def custom_openapi():
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
-app.openapi = custom_openapi  # type: ignore
-
 # Rate limiter (SlowAPI)
 app.state.limiter = limiter
 @app.exception_handler(RateLimitExceeded)
@@ -99,7 +97,8 @@ if settings.CORS_ENABLED:
     cors_origins = [o.strip() for o in settings.CORS_WHITELIST.split(",") if o.strip()]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_origins,
+        # allow_origins=cors_origins,
+        allow_origins=["*"],  # Or replace with your frontend domain
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -118,6 +117,9 @@ app.include_router(dashboard_router)
 
 # Errors
 add_exception_handlers(app)
+
+# Set custom OpenAPI schema after all routers are included
+app.openapi = custom_openapi  # type: ignore
 
 # 404/405 error handlers to standardize message key
 from fastapi.requests import Request
