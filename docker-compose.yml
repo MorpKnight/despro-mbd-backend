@@ -10,8 +10,8 @@ services:
       - DATABASE_URL=${DATABASE_URL:-sqlite:///./mbg_fastapi_dev.db}
       - CORS_WHITELIST=${CORS_WHITELIST:-http://localhost:8000,http://127.0.0.1:8000}
       - SEED_MASTER_ADMIN=${SEED_MASTER_ADMIN:-"true"}
-    ports:
-      - "8000:8000"
+    # ports:
+    #   - "8000:8000"
     volumes:
       - mbg-data:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
