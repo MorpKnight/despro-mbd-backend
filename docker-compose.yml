@@ -13,7 +13,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - mbg-data:/app/mbg_fastapi_dev.db
+      - mbg-data:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     networks:
       - cloudflared-private
