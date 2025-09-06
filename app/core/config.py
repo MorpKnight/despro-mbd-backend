@@ -3,6 +3,7 @@ from pydantic import AnyUrl
 from typing import Optional
 import os
 
+
 class Settings(BaseSettings):
     # App
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
@@ -18,8 +19,8 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: Optional[str] = os.getenv("DATABASE_URL")
-    DB_ENGINE: str = os.getenv("DB_ENGINE", "sqlite")  # sqlite or postgresql
-    DB_HOST: str = os.getenv("DB_HOST", "localhost")
+    DB_ENGINE: str = os.getenv("DB_ENGINE", "postgresql")  # default to postgresql
+    DB_HOST: str = os.getenv("DB_HOST", "db")
     DB_PORT: str = os.getenv("DB_PORT", "5432")
     DB_NAME: str = os.getenv("DB_NAME", "mbg_dev")
     DB_USER: str = os.getenv("DB_USER", "postgres")
@@ -29,13 +30,14 @@ class Settings(BaseSettings):
         env_file = ".env"
         case_sensitive = False
 
+
     @property
     def sql_alchemy_database_uri(self) -> str:
         if self.DATABASE_URL:
             return self.DATABASE_URL
         if self.DB_ENGINE == "postgresql":
             return f"postgresql+psycopg2://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-        # default sqlite file in project root
+        # fallback sqlite file in project root
         return "sqlite:///./mbg_fastapi_dev.db"
 
 settings = Settings()
