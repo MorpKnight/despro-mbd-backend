@@ -70,7 +70,7 @@ def custom_openapi():
     )
     openapi_schema["servers"] = [
         {"url": "http://localhost:8000", "description": "Development"},
-        {"url": "https://api.mbg-app.com/v1", "description": "Production (example)"},
+        {"url": "https://mbg.mrt.qzz.io", "description": "Production"},
     ]
     app.openapi_schema = openapi_schema
     return app.openapi_schema
