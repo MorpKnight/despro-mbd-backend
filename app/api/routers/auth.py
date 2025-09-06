@@ -1,49 +1,18 @@
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from app.core.rate_limit import limiter
+from sqlalchemy.orm import Session
+from sqlalchemy import select
+
+from app.db.session import get_db
+from app.models import User
+from app.schemas.user import UserCreate, UserOut
+from pydantic import BaseModel, EmailStr
+from app.core.security import create_access_token, verify_password, hash_password
+from app.api.deps import get_current_user
 import random
 from datetime import datetime, timedelta
 
-# Request OTP untuk reset password
-from pydantic import BaseModel
-
-class RequestOTP(BaseModel):
-    email: EmailStr
-
-@router.post("/request-reset-password")
-def request_reset_password(payload: RequestOTP, db: Session = Depends(get_db)):
-    user = db.execute(select(User).where(User.email == payload.email)).scalars().first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    otp = str(random.randint(100000, 999999))
-    expiry = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
-    user.otp_code = otp
-    user.otp_expiry = expiry
-    db.add(user)
-    db.commit()
-    print(f"[OTP] Kode OTP reset password untuk {user.email}: {otp} (berlaku 10 menit)")
-    return {"success": True, "message": "OTP sent (dummy, check console)"}
-
-# Reset password dengan OTP
-class ResetPasswordRequest(BaseModel):
-    email: EmailStr
-    otp: str
-    new_password: str
-
-@router.post("/reset-password")
-def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
-    user = db.execute(select(User).where(User.email == payload.email)).scalars().first()
-    if not user or not user.otp_code or not user.otp_expiry:
-        raise HTTPException(status_code=400, detail="OTP not requested or expired")
-    # Cek expiry
-    if datetime.utcnow() > datetime.fromisoformat(user.otp_expiry):
-        raise HTTPException(status_code=400, detail="OTP expired")
-    if user.otp_code != payload.otp:
-        raise HTTPException(status_code=400, detail="OTP salah")
-    user.password = hash_password(payload.new_password)
-    user.otp_code = None
-    user.otp_expiry = None
-    db.add(user)
-    db.commit()
-    print(f"[NOTIF] Password user {user.email} berhasil direset.")
-    return {"success": True, "message": "Password reset successful"}
+router = APIRouter(prefix="/auth", tags=["auth"])
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from app.core.rate_limit import limiter
 from sqlalchemy.orm import Session
