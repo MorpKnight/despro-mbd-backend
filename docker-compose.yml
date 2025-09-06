@@ -48,6 +48,6 @@ networks:
   internal:
     driver: bridge
 
-# volumes:
-#   mbg-data:
-#   pgdata:
+volumes:
+  # mbg-data:
+  pgdata:
