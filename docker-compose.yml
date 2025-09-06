@@ -27,7 +27,7 @@ services:
       - DB_NAME=mbg_dev
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - CORS_WHITELIST=${CORS_WHITELIST:-http://localhost:8000,http://127.0.0.1:8000}
+      - CORS_WHITELIST=${CORS_WHITELIST:-http://localhost:8000,http://127.0.0.1:8000,https://mbg.mrt.qzz.io}
       - SEED_MASTER_ADMIN=${SEED_MASTER_ADMIN:-true}
     depends_on:
       - db
